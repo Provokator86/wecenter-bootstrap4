@@ -1,0 +1,20 @@
+@charset "UTF-8";
+/*!
+ * 由bennyyao 为 Wecenter 3.3.1（http://www.wecenter.com/）定制
+ * 版权归 bennyyao 所有，按 MIT 协议授权使用
+ */
+#header_publish{
+    width:90px;
+}
+#header_publish + .dropdown-menu{
+    min-width:90px;
+    width:90px;
+    margin-top: -0.5rem;
+}
+.aw-publish-btn .dropdown-menu .btn{
+    margin-top: 0 !important;
+}
+.aw-publish-btn.show #header_publish > .btn{
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}

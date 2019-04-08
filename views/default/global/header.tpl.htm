@@ -1,0 +1,237 @@
+<?php TPL::output('global/header_meta.tpl.htm'); ?>
+<?php
+	$nav=array(
+		0=>array('url'=>'home','title'=>'动态','status'=>'Y','is_user'=>1,'icon'=>'fas fa-home'),
+		1=>array('url'=>'column','title'=>'专栏','status'=>get_setting('enable_column'),'is_user'=>0,'icon'=>'fas fa-columns'),
+		2=>array('url'=>'explore','title'=>'发现','status'=>'Y','is_user'=>0,'icon'=>'fas fa-list'),
+		3=>array('url'=>'topic','title'=>'话题','status'=>'Y','is_user'=>0,'icon'=>'far fa-comment-alt'),
+		4=>array('url'=>'notifications','title'=>'通知','status'=>'Y','is_user'=>1,'icon'=>'far fa-bell'),
+		5=>array('url'=>'help','title'=>'帮助','status'=>get_setting('enable_help_center'),'is_user'=>0,'icon'=>'far fa-lightbulb'),
+	);
+	if(!$this->user_id){	
+		foreach($nav as $k=>$v){
+			if($v['is_user']==1)
+				unset($nav[$k]);
+		}	
+	}else{
+		foreach($nav as $k=>$v){
+			if($v['status']=='N')
+				unset($nav[$k]);
+		}	
+	}
+?>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-wecenter py-0 shadow">
+        <div class="container">
+            <a class="navbar-brand py-0" href="#">
+                <img src="<?php echo G_STATIC_URL; ?>/css/default/img/logo@2x.png" style="height:36px">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <!-- 导航栏 -->
+                <ul class="navbar-nav bg-highlight mr-auto">
+                    <form class="form-inline">
+                        <div class="input-group">
+                            <div class="input-group-prepend inner">
+                                <span class="input-group-text" title="<?php _e('搜索'); ?>" id="global_search_btns" onClick="$('#global_search_form').submit();"><i class="fas fa-search fa-fw"></i></span>
+                            </div>
+                            <input class="form-control rounded-pill mr-sm-2" type="search" placeholder="<?php _e('搜索问题、话题或人'); ?>..." aria-label="<?php _e('搜索问题、话题或人'); ?>...">
+                        </div>
+                    </form>
+                    <?php
+                    foreach(array_slice($nav,0,5) as $k=>$v):?>
+                        <?php if(($v['is_user']==0 && $v['status']=='Y')||($v['is_user']==1 && $v['status']=='Y' && $this->user_id)):?>
+                    <li class="nav-item<?php if ($_GET['app'] == $v['url'] ) { ?> active<?php } ?><?php echo ($v['url']=='notifications')?' dropdown':''?>">
+                        <a class="nav-link py-3" href="<?php echo $v['url'];?>/"<?php echo ($v['url']=='notifications')?' data-toggle="dropdown"':''?>>
+                            <i class="<?php echo $v['icon'];?> mr-2"></i><?php _e($v['title']); ?>
+                        </a>
+
+                        <?php if($v['url']=='notifications'):?>
+                            <span class="badge badge-danger" style="display:none" id="notifications_unread">
+                            <?php echo $this->user_info['notification_unread']; ?>
+                        </span>
+                            <div class="dropdown-menu shadow dropdown-menu-right">
+                                <div class="mod-body">
+                                    <ul id="header_notification_list"></ul>
+                                </div>
+                                <div class="mod-footer">
+                                    <a href="notifications/"><?php _e('查看全部'); ?></a>
+                                </div>
+                            </div>
+                        <?php endif;?>
+                    </li>
+                        <?php endif;?>
+                    <?php endforeach;?>
+                    <li class="nav-item dropdown dropdown-on-hover">
+                        <a href="#" class="nav-link py-3" data-toggle="dropdown"><i class="fas fa-ellipsis-h"></i></a>
+                        <div class="dropdown-menu shadow border-0 p-0" style="min-width:100px">
+                            <ul class="nav flex-column bg-wecenter" id="extensions-nav-list">
+                                <?php if (check_extension_package('ticket') && get_setting('ticket_enabled') == 'Y' && ($this->user_info['permission']['publish_ticket'] || $this->user_info['permission']['is_administortar'] || $this->user_info['permission']['is_service'])) { ?>
+                                    <li class="nav-item<?php if ($_GET['app'] == 'ticket') { ?> active<?php } ?>">
+                                        <a class="nav-link py-3" href="ticket/"><i class="fas fa-clipboard-check mr-2"></i><?php _e('工单'); ?></a>
+                                    </li>
+                                <?php } ?>
+                                <?php if (check_extension_package('project') && get_setting('project_enabled') == 'Y') { ?>
+                                    <li class="nav-item<?php if ($_GET['app'] == 'project') { ?> active<?php } ?>">
+                                        <a class="nav-link py-3" href="project/"><i class="far fa-calendar-alt mr-2"></i><?php _e('活动'); ?></a>
+                                    </li>
+                                <?php } ?>
+                                <?php foreach(array_slice($nav,5) as $k=>$v):?>
+                                    <?php if(($v['is_user']==0 && $v['status']=='Y')||($v['is_user']==1 && $v['status']=='Y' && $this->user_id)):?>
+                                        <li class="nav-item<?php if ($_GET['app'] == $v['url']) { ?> active<?php } ?>">
+                                            <a class="nav-link py-3" href="<?php echo $v['url'];?>/"><i class="<?php echo $v['icon'];?> mr-2"></i><?php _e($v['title']); ?></a>
+                                        </li>
+                                    <?php endif;?>
+                                <?php endforeach;?>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+                <!-- end 导航栏 -->
+                <ul class="navbar-nav ml-auto">
+
+                    <?php if ($this->user_id) { ?>
+                        <!-- 发起 -->
+                        <?php
+                        if ($_GET['app'] != 'publish')
+                        { ?>
+                        <li class="nav-item aw-publish-btn dropdown dropdown-on-hover py-2 mr-3" role="group">
+                            <div id="header_publish" data-toggle="dropdown">
+                                <a class="btn btn-block btn-primary" <?php if (get_setting('quick_publish') == 'Y' AND $this->user_id) { ?>href="publish/"<?php } else { ?>href="publish/<?php if ($_GET['category']) { ?>category_id-<?php echo intval($_GET['category']); ?>__<?php } ?><?php if ($this->topic_info) { ?>topic_title-<?php echo urlencode($this->topic_info['topic_title']); ?>__<?php } ?>"<?php } ?><?php if (get_setting('quick_publish') == 'Y' && $this->user_id) { ?> onclick="AWS.dialog('publish', {'category_enable':'<?php echo (get_setting('category_enable') == 'Y') ? '1' : '0'; ?>', 'category_id':'<?php echo intval($_GET['category']); ?>', 'topic_title':'<?php echo $this->topic_info['topic_title']; ?>'}); return false;"<?php } ?>><i class="far fa-file fa-lg mr-2"></i><?php _e('发起'); ?></a>
+                            </div>
+                            <div class="dropdown-menu shadow border-0 p-0">
+                                <div class="btn-group-vertical w-100">
+                                    <a class="btn btn-block btn-primary rounded-0" href="#" onclick="$(this).children('form').submit();">
+                                        <form method="post" action="publish/">
+                                            <?php if ($this->topic_info['topic_title']) { ?>
+                                                <input type="hidden" value="<?php echo $this->topic_info['topic_title']; ?>" name="topics[]" />
+                                            <?php } ?>
+                                        </form>
+                                        <?php _e('问题'); ?>
+                                    </a>
+                                    <?php if(get_setting("reward_enabled") == 'Y'){ ?>
+                                        <a href="publish/category-reward" class="btn btn-block btn-light">
+                                            <?php _e('悬赏'); ?>
+                                        </a>
+                                    <?php } ?>
+                                    <?php if ($this->user_info['permission']['publish_article']) { ?>
+                                        <a class="btn btn-block btn-primary" href="#" onclick="$(this).children('form').submit();">
+                                            <form method="post" action="publish/article/">
+                                                <?php if ($this->topic_info['topic_title']) { ?>
+                                                    <input type="hidden" value="<?php echo $this->topic_info['topic_title']; ?>" name="topics[]" />
+                                                <?php } ?>
+                                            </form>
+                                            <?php _e('文章'); ?>
+                                        </a>
+                                        <?php if(is_website()){?>
+                                            <a class="btn btn-block btn-primary" href="#" onclick="$(this).children('form').submit();">
+                                                <form method="post" action="publish/suggest/">
+                                                    <?php if ($this->topic_info['topic_title']) { ?>
+                                                        <input type="hidden" value="<?php echo $this->topic_info['topic_title']; ?>" name="topics[]" />
+                                                    <?php } ?>
+                                                </form>
+                                                <?php _e('建议'); ?>
+                                            </a>
+                                        <?php } ?>
+                                    <?php } ?>
+                                    <?php if (check_extension_package('ticket') && get_setting('ticket_enabled') == 'Y' && $this->user_info['permission']['publish_ticket']) { ?>
+                                        <a href="ticket/publish/" class="btn btn-block btn-primary">
+                                            <?php _e('工单'); ?>
+                                        </a>
+                                    <?php } ?>
+                                    <?php if (check_extension_package('project') && get_setting('project_enabled') == 'Y' && $this->user_info['permission']['publish_project']) { ?>
+                                        <a href="project/publish/" class="btn btn-block btn-primary">
+                                            <?php _e('活动'); ?>
+                                        </a>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </li>
+                        <?php }
+                        ?>
+                        <!-- end 发起 -->
+                        <!-- 用户栏 -->
+                        <li class="aw-user-nav nav-item dropdown dropdown-on-hover py-2">
+                            <a data-toggle="dropdown" href="people/<?php echo $this->user_info['uid']; ?>">
+                                <img class="rounded" alt="<?php echo $this->user_info['user_name']; ?>" src="<?php echo get_avatar_url($this->user_info['uid'], 'mid'); ?>" style="width:34px"/>
+                                <?php if ($this->user_info['inbox_unread'] != 0) {?>
+                                    <span class="badge badge-danger"><?php echo $this->user_info['inbox_unread']?></span>
+                                <?php } ?>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow">
+                                <a class="dropdown-item" href="inbox/">
+                                    <i class="far fa-envelope fa-fw mr-3"></i><?php _e('私信'); ?>
+                                    <span class="badge badge-danger collapse" id="inbox_unread">0</span>
+                                </a>
+                                <a class="dropdown-item d-none d-md-block" href="account/setting/profile/">
+                                    <i class="fas fa-cog mr-3 fa-fw"></i><?php _e('设置'); ?>
+                                </a>
+                                <?php if ($this->user_info['permission']['is_administortar'] OR $this->user_info['permission']['is_moderator']) { ?>
+                                    <a class="dropdown-item d-none d-md-block" href="admin/">
+                                        <i class="fas fa-desktop fa-fw mr-3"></i><?php _e('管理'); ?>
+                                    </a>
+                                <?php } ?>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item dropdown dropdown-on-hover dropleft" href="#" id="changeSkin">
+                                    <a data-toggle="dropdown">
+                                        <i class="fas fa-palette fa-fw mr-3"></i><?php _e('换肤'); ?>
+                                    </a>
+                                    <div class="dropdown-menu shadow" id="skinList">
+                                        <a class="dropdown-item" href="account/change_skin/?type=common">
+                                            <span class="badge badge-wecenter badge-dot mr-3"></span> <?php _e('默认'); ?><?php if($this->user_info['skin']=='common.css'){?><i class="fas fa-check fa-fw ml-2"></i><?php }?>
+                                        </a>
+                                        <a class="dropdown-item" href="account/change_skin/?type=green">
+                                            <span class="badge badge-success badge-dot mr-3"></span> <?php _e('绿色'); ?><?php if($this->user_info['skin']=='green.css'){?><i class="fas fa-check fa-fw ml-2"></i><?php }?>
+                                        </a>
+                                        <a class="dropdown-item" href="account/change_skin/?type=orange">
+                                            <span class="badge badge-warning badge-dot mr-3"></span> <?php _e('橙色'); ?><?php if($this->user_info['skin']=='orange.css'){?><i class="fas fa-check fa-fw ml-2"></i><?php }?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="account/logout/">
+                                    <i class="fas fa-power-off fa-fw mr-3"></i><?php _e('退出'); ?>
+                                </a>
+                            </div>
+                        </li>
+                        <!-- end 用户栏 -->
+                        <!-- 登陆&注册栏 -->
+                    <?php } else { ?>
+                        <li class="nav-item">
+                            <a class="login btn btn-primary" href="account/login/"><?php _e('登录'); ?></a>
+                            <?php if (get_setting('register_type') == 'open') { ?><a class="register btn btn-success" href="account/register/"><?php _e('注册'); ?></a><?php } ?>
+                        </li>
+                    <?php } ?>
+                    <!-- end 登陆&注册栏 -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+	<?php if ($this->user_id AND $this->user_info['email'] AND !$this->user_info['valid_email'] AND get_setting('register_valid_type') != 'N') { ?>
+    <div class="alert alert-warning aw-email-verify text-center" role="alert">
+        <a class="alert-link font-weight-normal" href="#" onclick="AWS.ajax_request(G_BASE_URL + '/account/ajax/send_valid_mail/');"><?php _e('你的邮箱 %s 还未验证, 点击这里重新发送验证邮件', $this->user_info['email']); ?></a>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+	<?php } ?>
+
+    <script>
+        $(function () {
+            var $changeSkin = $("#changeSkin"), $skinList = $("#skinList");
+            $changeSkin.mouseenter(function () {
+                $skinList.stop(true,true).show();
+            });
+            $changeSkin.mouseleave(function (e) {
+                $skinList.hide();
+            });
+            $skinList.mouseover(function () {
+                $(this).stop(true,true).show();
+            });
+            $skinList.mouseleave(function (e) {
+                $(this).hide();
+            })
+        })
+    </script>
